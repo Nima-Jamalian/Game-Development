@@ -16,12 +16,14 @@ public class Player : MonoBehaviour
     [SerializeField] float mouseSensivity = 1f;
     [SerializeField] float walkingSpeed = 1f;
     [SerializeField] float runningSpeed = 1f;
+    [SerializeField] Weapon weapon; 
     // Start is called before the first frame update
     void Start()
     {
         Cursor.lockState = CursorLockMode.Locked;
         Debug.Log(transform.position);
         characterController = GetComponent<CharacterController>();
+        //weapon = GameObject.Find("Player").GetComponent<Weapon>();
     }
 
     // Update is called once per frame
@@ -29,6 +31,11 @@ public class Player : MonoBehaviour
     {
         CharacterMovement();
         MouseMovement();
+
+        if (Input.GetMouseButton(0))
+        {
+            weapon.RayCast();
+        }
     }
 
     void CharacterMovement() {
