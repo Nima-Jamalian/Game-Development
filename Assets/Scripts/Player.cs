@@ -16,13 +16,15 @@ public class Player : MonoBehaviour
     [SerializeField] float mouseSensivity = 1f;
     [SerializeField] float walkingSpeed = 1f;
     [SerializeField] float runningSpeed = 1f;
-    [SerializeField] Weapon weapon; 
+    [SerializeField] Weapon weapon;
+    AudioSource audioSource;
     // Start is called before the first frame update
     void Start()
     {
         Cursor.lockState = CursorLockMode.Locked;
         Debug.Log(transform.position);
         characterController = GetComponent<CharacterController>();
+        audioSource = GetComponent<AudioSource>();
         //weapon = GameObject.Find("Player").GetComponent<Weapon>();
     }
 
@@ -34,13 +36,24 @@ public class Player : MonoBehaviour
 
         if (Input.GetMouseButton(0))
         {
-            weapon.RayCast();
+            weapon.Shooting();
         }
     }
 
+    float nextActionTime = 0f;
+    float playRate = 0.8f;
     void CharacterMovement() {
         horizontalInput = Input.GetAxis("Horizontal");
         verticalInput = Input.GetAxis("Vertical");
+        if(verticalInput > 0 || horizontalInput > 0)
+        {
+            if(Time.time >= nextActionTime)
+            {
+                nextActionTime = Time.time + playRate;
+                audioSource.Play();
+            }
+      
+        }
         direction = new Vector3(horizontalInput, 0, verticalInput);
         velocity = direction * speed;
         velocity.y -= gravity; //velocity.y = velocity.y - gravity
@@ -50,10 +63,12 @@ public class Player : MonoBehaviour
         if (Input.GetKey(KeyCode.LeftShift))
         {
             speed = runningSpeed;
+            playRate = 0.4f;
         }
         else
         {
             speed = walkingSpeed;
+            playRate = 0.8f;
         }
     }
 

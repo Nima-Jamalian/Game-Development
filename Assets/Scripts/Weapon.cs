@@ -4,17 +4,31 @@ using UnityEngine;
 
 public class Weapon : MonoBehaviour
 {
+    [Header("Weapon Pramater")]
     [SerializeField] float fireRate = 8f;
     [SerializeField] float ammoSize = 30;
     [SerializeField] float currentAmmo;
     bool hasAmmo = true;
     private float nextTimeToFie = 0f;
-    AudioSource audioSource;
+    [SerializeField] float currentAmmoPrecentage;
+    bool isColorChnageLerpActive = false;
+    
+    [Header("Weapon VFX")]
     [SerializeField] Transform muzzleLocation;
     [SerializeField] GameObject lazerSpark;
-    [SerializeField] GameObject muzzleFlash;
+    [SerializeField] ParticleSystem muzzleFlash;
     [SerializeField] GameObject projectile;
+    [SerializeField] Material weaponMaterial;
+    [SerializeField] Color WeaponMagFull;
+    [SerializeField] Color WeaponMagHlaf;
+    [SerializeField] Color WeaponMagEmpty;
+    
     Animator animator;
+
+    [Header("Weapon Audio")]
+    [SerializeField] AudioClip weaponFire;
+    [SerializeField] AudioClip weaponReload;
+    AudioSource audioSource;
 
     // Start is called before the first frame update
     void Start()
@@ -22,36 +36,46 @@ public class Weapon : MonoBehaviour
         audioSource = GetComponent<AudioSource>();
         animator = GetComponent<Animator>();
         currentAmmo = ammoSize;
+        weaponMaterial.SetColor("_EmissionColor", WeaponMagFull);
     }
+
 
     // Update is called once per frame
     void Update()
     {
-        if(currentAmmo <= 0)
-        {
-            hasAmmo = false;
-        }
 
         if (Input.GetKeyDown(KeyCode.R))
         {
-            currentAmmo = ammoSize;
-            hasAmmo = true;
+            StartCoroutine(WeaponReload());
         }
+
+        CheckWeaponAmmuStatusAndUpdateColor();
+
     }
 
-    public void RayCast()
+
+
+    public void Shooting()
     {
         if (Time.time >= nextTimeToFie && hasAmmo == true) {
+            //Update Fire Rate
             nextTimeToFie = Time.time + 1f / fireRate;
-            Ray ray = Camera.main.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0));
+            //Update Ammu
             currentAmmo--;
+            //Muzzle Flash Effect
+            muzzleFlash.Play();
+            //Shooting Audio
+            audioSource.clip = weaponFire;
+            audioSource.Play();
+            //Fire Projectile
+            Instantiate(projectile, muzzleLocation.transform.position, Camera.main.transform.rotation);
+            //Weapon Recoil Animation
+            animator.SetTrigger("WeaponFire");
+            //Raycast
+            Ray ray = Camera.main.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0));
             if (Physics.Raycast(ray, out RaycastHit hitInfo, Mathf.Infinity))
-            {
-                animator.SetTrigger("WeaponFire");
-                Debug.Log(hitInfo.transform.name);
-                Instantiate(projectile, muzzleLocation.transform.position, Camera.main.transform.rotation);
-                audioSource.Play();
-                GameObject hitSpark = Instantiate(lazerSpark, hitInfo.transform.position, Quaternion.identity);
+            {       
+                GameObject hitSpark = Instantiate(lazerSpark, hitInfo.point, Quaternion.identity);
                 Destroy(hitSpark, 1f);
                 //Debug.Log(hitInfo.transform.name);
                 if (hitInfo.transform.CompareTag("Enemy"))
@@ -60,5 +84,62 @@ public class Weapon : MonoBehaviour
                 }
             }
         }
+    }
+
+    IEnumerator WeaponReload()
+    {
+        hasAmmo = false;
+        StartCoroutine(WeaponColorChangeLerp(WeaponMagFull, 1f));
+        animator.SetTrigger("WeaponReload");
+        audioSource.clip = weaponReload;
+        audioSource.Play();
+        yield return new WaitForSeconds(1f);
+        audioSource.Stop();
+        currentAmmo = ammoSize;
+        hasAmmo = true;
+    }
+
+    private void CheckWeaponAmmuStatusAndUpdateColor()
+    {
+        if (currentAmmo <= 0)
+        {
+            hasAmmo = false;
+        }
+
+        currentAmmoPrecentage = (currentAmmo / ammoSize) * 100;
+        if (currentAmmoPrecentage < 55 && currentAmmoPrecentage > 20 && isColorChnageLerpActive == false && hasAmmo == true)
+        {
+            //turn yello
+            if (weaponMaterial.GetColor("_EmissionColor") != WeaponMagHlaf)
+            {
+                StartCoroutine(WeaponColorChangeLerp(WeaponMagHlaf, 2f));
+            }
+        }
+        else if (currentAmmoPrecentage < 20 && isColorChnageLerpActive == false && hasAmmo == true)
+        {
+            if (weaponMaterial.GetColor("_EmissionColor") != WeaponMagEmpty)
+            {
+                //turn red
+                StartCoroutine(WeaponColorChangeLerp(WeaponMagEmpty, 2f));
+            }
+        }
+    }
+
+    IEnumerator WeaponColorChangeLerp(Color endValue, float duration)
+    {
+        Debug.Log("I am being called");
+        isColorChnageLerpActive = true;
+        float time = 0;
+        Color startValue = weaponMaterial.GetColor("_EmissionColor");
+
+        while (time < duration)
+        {
+            weaponMaterial.SetColor("_EmissionColor", Color.Lerp(startValue, endValue, time / duration));
+            time += Time.deltaTime;
+            yield return null;
+        }
+
+        weaponMaterial.SetColor("_EmissionColor", endValue);
+        isColorChnageLerpActive = false;
     }
 }
