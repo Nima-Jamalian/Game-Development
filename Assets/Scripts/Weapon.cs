@@ -15,7 +15,7 @@ public class Weapon : MonoBehaviour
     
     [Header("Weapon VFX")]
     [SerializeField] Transform muzzleLocation;
-    [SerializeField] GameObject lazerSpark;
+    [SerializeField] GameObject lazerSparkGreen,lazerSparkRed;
     [SerializeField] ParticleSystem muzzleFlash;
     [SerializeField] GameObject projectile;
     [SerializeField] Material weaponMaterial;
@@ -58,6 +58,7 @@ public class Weapon : MonoBehaviour
     public void Shooting()
     {
         if (Time.time >= nextTimeToFie && hasAmmo == true) {
+            //Visial Effects
             //Update Fire Rate
             nextTimeToFie = Time.time + 1f / fireRate;
             //Update Ammu
@@ -71,16 +72,22 @@ public class Weapon : MonoBehaviour
             Instantiate(projectile, muzzleLocation.transform.position, Camera.main.transform.rotation);
             //Weapon Recoil Animation
             animator.SetTrigger("WeaponFire");
+
             //Raycast
             Ray ray = Camera.main.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0));
             if (Physics.Raycast(ray, out RaycastHit hitInfo, Mathf.Infinity))
             {       
-                GameObject hitSpark = Instantiate(lazerSpark, hitInfo.point, Quaternion.identity);
-                Destroy(hitSpark, 1f);
+
                 //Debug.Log(hitInfo.transform.name);
                 if (hitInfo.transform.CompareTag("Enemy"))
                 {
-                    hitInfo.transform.GetComponent<MeshRenderer>().material.color = Color.red;
+                    GameObject hitSpark = Instantiate(lazerSparkRed, hitInfo.point, Quaternion.identity);
+                    Destroy(hitSpark, 1f);
+                    hitInfo.transform.GetComponent<Enemy>().TakeDamage();
+                } else
+                {
+                    GameObject hitSpark = Instantiate(lazerSparkGreen, hitInfo.point, Quaternion.identity);
+                    Destroy(hitSpark, 1f);
                 }
             }
         }
@@ -112,7 +119,7 @@ public class Weapon : MonoBehaviour
             //turn yello
             if (weaponMaterial.GetColor("_EmissionColor") != WeaponMagHlaf)
             {
-                StartCoroutine(WeaponColorChangeLerp(WeaponMagHlaf, 2f));
+                StartCoroutine(WeaponColorChangeLerp(WeaponMagHlaf, 1f));
             }
         }
         else if (currentAmmoPrecentage < 20 && isColorChnageLerpActive == false && hasAmmo == true)
@@ -120,7 +127,7 @@ public class Weapon : MonoBehaviour
             if (weaponMaterial.GetColor("_EmissionColor") != WeaponMagEmpty)
             {
                 //turn red
-                StartCoroutine(WeaponColorChangeLerp(WeaponMagEmpty, 2f));
+                StartCoroutine(WeaponColorChangeLerp(WeaponMagEmpty, 1f));
             }
         }
     }

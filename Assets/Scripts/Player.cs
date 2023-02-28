@@ -4,6 +4,7 @@ using UnityEngine;
 
 public class Player : MonoBehaviour
 {
+    [SerializeField] float health = 10f;
     float horizontalInput;
     float verticalInput;
     float mouseX;
@@ -18,11 +19,11 @@ public class Player : MonoBehaviour
     [SerializeField] float runningSpeed = 1f;
     [SerializeField] Weapon weapon;
     AudioSource audioSource;
+    [SerializeField] AudioSource damageAudioSource;
     // Start is called before the first frame update
     void Start()
     {
         Cursor.lockState = CursorLockMode.Locked;
-        Debug.Log(transform.position);
         characterController = GetComponent<CharacterController>();
         audioSource = GetComponent<AudioSource>();
         //weapon = GameObject.Find("Player").GetComponent<Weapon>();
@@ -85,5 +86,18 @@ public class Player : MonoBehaviour
         Camera.main.transform.localEulerAngles = newRotationY;
     }
 
+    public void TakeDamage()
+    {
+        damageAudioSource.Play();
+        health--;
+        if(health == 0)
+        {
+            Death();
+        }
+    }
 
+    private void Death()
+    {
+        Debug.Log("Game Over!");
+    }
 }

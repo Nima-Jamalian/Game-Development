@@ -1,22 +1,21 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.AI;
 
-public class Animation : MonoBehaviour
+public class AITest : MonoBehaviour
 {
-    Animator animator;
+    NavMeshAgent navMeshAgent;
+    [SerializeField] Transform target;
     // Start is called before the first frame update
     void Start()
     {
-        animator = GetComponent<Animator>();
+        navMeshAgent = GetComponent<NavMeshAgent>();
     }
 
     // Update is called once per frame
     void Update()
     {
-        if (Input.GetKeyDown(KeyCode.Space))
-        {
-            animator.SetTrigger("PlayAnimation");
-        }
+        navMeshAgent.SetDestination(target.position);
     }
 }
