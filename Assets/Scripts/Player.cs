@@ -20,6 +20,8 @@ public class Player : MonoBehaviour
     [SerializeField] Weapon weapon;
     AudioSource audioSource;
     [SerializeField] AudioSource damageAudioSource;
+
+    UIManager uIManager;
     // Start is called before the first frame update
     void Start()
     {
@@ -27,6 +29,7 @@ public class Player : MonoBehaviour
         characterController = GetComponent<CharacterController>();
         audioSource = GetComponent<AudioSource>();
         //weapon = GameObject.Find("Player").GetComponent<Weapon>();
+        uIManager = GameObject.Find("Canvas").GetComponent<UIManager>();
     }
 
     // Update is called once per frame
@@ -90,6 +93,8 @@ public class Player : MonoBehaviour
     {
         damageAudioSource.Play();
         health--;
+        //Update health bar hud
+        uIManager.UpdateHealthBarHud(10, health);
         if(health == 0)
         {
             Death();

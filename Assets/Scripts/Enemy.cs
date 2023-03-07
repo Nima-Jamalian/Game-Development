@@ -5,7 +5,7 @@ using UnityEngine.AI;
 public class Enemy : MonoBehaviour
 {
     [SerializeField] private float health = 5f;
-    private bool isEnemeyAlive = true;
+    [SerializeField] private bool isEnemeyAlive = true;
     [SerializeField] AudioSource damageAudioSource;
     [SerializeField] Rigidbody[] bodyParts;
     [SerializeField] GameObject explosion;
@@ -17,49 +17,75 @@ public class Enemy : MonoBehaviour
     [SerializeField] Transform playerLookAtTargetTransfer;
     [SerializeField] AudioSource attackAudioSource;
     [Header("AI")]
-    private NavMeshAgent navMeshAgent;
+    [SerializeField] private NavMeshAgent navMeshAgent;
+    [SerializeField] private LayerMask player;
     //Patroling
-    [SerializeField] Vector3 walkPos;
-    [SerializeField] bool walkPoseSet;
+    Vector3 walkPos;
+    float moveTime = 0f;
+    bool walkPoseSet;
     [SerializeField] float walkRange;
+    //States
+    [SerializeField] float sightRange, attackRange;
+    [SerializeField] bool isPlayerinSightRange, isPlayerinAttackRange;
     // Start is called before the first frame update
     void Start()
     {
-        navMeshAgent = GetComponent<NavMeshAgent>();
         SearchForWalkPose();
     }
 
     // Update is called once per frame
     void Update()
     {
-        //Loook at the player
-        transform.LookAt(playerLookAtTargetTransfer.position);
-        //Patroling();
-        //ChasePlayer();
-        //Attack();
+       //Enemey AI
+       SetAIStates();
+    }
+
+    private void SetAIStates()
+    {
+        if(isEnemeyAlive == true)
+        {
+            isPlayerinSightRange = Physics.CheckSphere(transform.position, sightRange, player);
+            isPlayerinAttackRange = Physics.CheckSphere(transform.position, attackRange, player);
+
+            if (isPlayerinSightRange == false && isPlayerinAttackRange == false)
+            {
+                Patroling();
+            }
+            else if (isPlayerinSightRange == true && isPlayerinAttackRange == false)
+            {
+                ChasePlayer();
+            }
+            else if (isPlayerinSightRange == true && isPlayerinAttackRange == true)
+            {
+                Attack();
+            }
+        }
     }
 
     private void Patroling()
     {
-        if(walkPoseSet == true)
+        if (walkPoseSet == true && isEnemeyAlive == true)
         {
             navMeshAgent.SetDestination(walkPos);
-        } else
+        }
+        else
         {
             SearchForWalkPose();
         }
 
         Vector3 distanceToWalk = transform.position - walkPos;
-        //Debug.Log(distanceToWalk.magnitude);
+        Debug.Log("Walk Distance" + distanceToWalk.magnitude);
         Debug.Log("Velocity" + navMeshAgent.velocity.magnitude);
-        if(distanceToWalk.magnitude < 5f)
+
+        //Check if stuck
+        moveTime += Time.deltaTime;
+        if (navMeshAgent.velocity.magnitude < 1f && moveTime > 1f)
         {
-            if (navMeshAgent.velocity.magnitude < 1f)
-            {
-                walkPoseSet = false;
-            }
+            walkPoseSet = false;
+            moveTime = 0;
         }
     }
+
 
     private void SearchForWalkPose()
     {
@@ -71,29 +97,32 @@ public class Enemy : MonoBehaviour
 
     private void ChasePlayer()
     {
-        if(isEnemeyAlive == true)
-        {
-            navMeshAgent.SetDestination(playerLookAtTargetTransfer.position);
-        }
+        navMeshAgent.SetDestination(playerLookAtTargetTransfer.position);
     }
 
     private void Attack()
     {
-        if(isEnemeyAlive == true)
+        transform.LookAt(playerLookAtTargetTransfer.position);
+        if (hasAttack == false)
         {
-            if(hasAttack == false)
-            {
-                attackAudioSource.Play();
-                Instantiate(projectile, projectileSpawnPoint.position, projectileSpawnPoint.rotation);
-                hasAttack = true;
-                Invoke(nameof(ResetAttack), fireRate);
-            }
+            attackAudioSource.Play();
+            Instantiate(projectile, projectileSpawnPoint.position, projectileSpawnPoint.rotation);
+            hasAttack = true;
+            Invoke(nameof(ResetAttack), fireRate);
         }
     }
 
     private void ResetAttack()
     {
         hasAttack = false;
+    }
+
+    private void OnDrawGizmosSelected()
+    {
+        Gizmos.color = Color.yellow;
+        Gizmos.DrawWireSphere(transform.position, sightRange);
+        Gizmos.color = Color.red;
+        Gizmos.DrawWireSphere(transform.position, attackRange);
     }
 
     public void TakeDamage()
@@ -112,7 +141,7 @@ public class Enemy : MonoBehaviour
         explosion.SetActive(true);
         float explosionForce = Random.Range(100f, 350f);
         float explosionRadius = Random.Range(20f, 50f);
-        foreach(Rigidbody item in bodyParts)
+        foreach (Rigidbody item in bodyParts)
         {
             item.isKinematic = false;
             item.AddExplosionForce(explosionForce, transform.position, explosionRadius);

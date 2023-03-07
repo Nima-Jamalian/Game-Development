@@ -12,6 +12,8 @@ public class Weapon : MonoBehaviour
     private float nextTimeToFie = 0f;
     [SerializeField] float currentAmmoPrecentage;
     bool isColorChnageLerpActive = false;
+
+    private UIManager uIManager;
     
     [Header("Weapon VFX")]
     [SerializeField] Transform muzzleLocation;
@@ -33,6 +35,7 @@ public class Weapon : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
+        uIManager = GameObject.Find("Canvas").GetComponent<UIManager>();
         audioSource = GetComponent<AudioSource>();
         animator = GetComponent<Animator>();
         currentAmmo = ammoSize;
@@ -63,6 +66,8 @@ public class Weapon : MonoBehaviour
             nextTimeToFie = Time.time + 1f / fireRate;
             //Update Ammu
             currentAmmo--;
+            //Update Ammu bar hud
+            uIManager.UpdateAmmuBarHud(ammoSize, currentAmmo);
             //Muzzle Flash Effect
             muzzleFlash.Play();
             //Shooting Audio
@@ -103,6 +108,8 @@ public class Weapon : MonoBehaviour
         yield return new WaitForSeconds(1f);
         audioSource.Stop();
         currentAmmo = ammoSize;
+        //Update ammu bar hud
+        uIManager.UpdateAmmuBarHud(ammoSize, currentAmmo);
         hasAmmo = true;
     }
 
