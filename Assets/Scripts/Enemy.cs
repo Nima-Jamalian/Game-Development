@@ -27,6 +27,10 @@ public class Enemy : MonoBehaviour
     //States
     [SerializeField] float sightRange, attackRange;
     [SerializeField] bool isPlayerinSightRange, isPlayerinAttackRange;
+    //Item Drop
+    [Header("Item Drop")]
+    [SerializeField] GameObject healthPickUpPrefab;
+    [SerializeField] float healthPickUpSpawnRate;
     // Start is called before the first frame update
     void Start()
     {
@@ -74,8 +78,8 @@ public class Enemy : MonoBehaviour
         }
 
         Vector3 distanceToWalk = transform.position - walkPos;
-        Debug.Log("Walk Distance" + distanceToWalk.magnitude);
-        Debug.Log("Velocity" + navMeshAgent.velocity.magnitude);
+        //Debug.Log("Walk Distance" + distanceToWalk.magnitude);
+        //Debug.Log("Velocity" + navMeshAgent.velocity.magnitude);
 
         //Check if stuck
         moveTime += Time.deltaTime;
@@ -135,6 +139,15 @@ public class Enemy : MonoBehaviour
         }
     }
 
+    private void ItemDrop(GameObject item, float itemDropRate)
+    {
+        float drawn = Random.Range(0f, 100f);
+        if (drawn <= itemDropRate)
+        {
+            Instantiate(item, transform.position, Quaternion.identity);
+        }
+    }
+
     public void Death()
     {
         isEnemeyAlive = false;
@@ -147,6 +160,10 @@ public class Enemy : MonoBehaviour
             item.AddExplosionForce(explosionForce, transform.position, explosionRadius);
             item.useGravity = true;
         }
+        //Health Item
+        ItemDrop(healthPickUpPrefab, healthPickUpSpawnRate); 
         Destroy(this.gameObject, 10f);
     }
+
+
 }

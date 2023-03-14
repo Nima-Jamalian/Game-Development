@@ -4,7 +4,8 @@ using UnityEngine;
 
 public class Player : MonoBehaviour
 {
-    [SerializeField] float health = 10f;
+    [SerializeField] float currentHealth = 10f;
+    float maxHealth = 0;
     float horizontalInput;
     float verticalInput;
     float mouseX;
@@ -20,11 +21,11 @@ public class Player : MonoBehaviour
     [SerializeField] Weapon weapon;
     AudioSource audioSource;
     [SerializeField] AudioSource damageAudioSource;
-
     UIManager uIManager;
     // Start is called before the first frame update
     void Start()
     {
+        maxHealth = currentHealth;
         Cursor.lockState = CursorLockMode.Locked;
         characterController = GetComponent<CharacterController>();
         audioSource = GetComponent<AudioSource>();
@@ -92,10 +93,10 @@ public class Player : MonoBehaviour
     public void TakeDamage()
     {
         damageAudioSource.Play();
-        health--;
+        currentHealth--;
         //Update health bar hud
-        uIManager.UpdateHealthBarHud(10, health);
-        if(health == 0)
+        uIManager.UpdateHealthBarHud(maxHealth, currentHealth);
+        if(currentHealth == 0)
         {
             Death();
         }
@@ -104,5 +105,24 @@ public class Player : MonoBehaviour
     private void Death()
     {
         Debug.Log("Game Over!");
+    }
+
+    private void OnHealthPickUpItem(float healthPickUpValue)
+    {
+        currentHealth += healthPickUpValue;
+        if (currentHealth > maxHealth)
+        {
+            currentHealth = maxHealth;
+        }
+        uIManager.UpdateHealthBarHud(maxHealth, currentHealth);
+    }
+
+    private void OnTriggerEnter(Collider other)
+    {
+        if (other.CompareTag("HealthPickUp")){
+            //other.GetComponent<AudioSource>().Play();
+            OnHealthPickUpItem(other.GetComponent<HealthPickUpItem>().healthValue);
+            Destroy(other.gameObject);
+        }
     }
 }

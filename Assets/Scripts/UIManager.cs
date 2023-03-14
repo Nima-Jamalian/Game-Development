@@ -12,8 +12,6 @@ public class UIManager : MonoBehaviour
     //Game UI
     [SerializeField] private Image ammuBar;
     [SerializeField] private Image healthBar;
-
-
     // Start is called before the first frame update
     void Start()
     {
